@@ -21,6 +21,7 @@
 #' @export
 #' @importFrom rmarkdown draft render
 #' @importFrom knitr opts_chunk knit_hooks
+#' @importFrom tools file_path_as_absolute
 #' @details
 #' \code{pmx_report} uses pre-defined template .Rmd to generate the report.
 #' The idea is to pass the controller as a report argument using knitr \code{params} artifact.
@@ -147,11 +148,12 @@ pmx_draft <- function(ctr, name, template, edit) {
   # draft throw an error if that name is used, so I just added an explanation about that to prevent its use.
   if (grepl("skeleton.Rmd", template)) stop("`skeleton.Rmd` is a reserved template name used by rmarkdown::draft, please rename your template and try again.")
   template_file <- file.path(ctr$save_dir, sprintf("%s.Rmd", name))
+  user_template_file <- file_path_as_absolute(template)
   if (length(template_file) > 0 && file.exists(template_file)) {
-    # here I check if the Rmd that will be generated has the same name as the one saved currently on save_dir
-    if (grepl(sprintf("%s.Rmd", name), template)) {
-      # if they have the same name, we copy the one provided by the user, rename and fix the template name provided.
-      file.copy(template_file, file.path(ctr$save_dir, "report_template.Rmd"))
+    # here I check if the Rmd that will be generated has the same name/path as the one saved currently on save_dir
+    if (template_file == user_template_file) {
+      # then we copy the one provided by the user, rename and fix the content of the template variable provided.
+      file.copy(template_file, file.path(ctr$save_dir, "report_template.Rmd"), overwrite = TRUE)
       # in case the user provided the template file as a path, we need to account for that and replace for the new filename
       # .Platform$file.sep suppose to make the process system agnostic but tests cross-platform are advisable 
       prepath <- strsplit(template, .Platform$file.sep)[[1]]
